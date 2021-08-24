@@ -9,13 +9,16 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
-        return
+	if message.author == client.user:
+		return
+		
+	if message.content.startswith('$hello'):
+		await message.channel.send('Hello!')
 
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
+	if message.content.startswith('$help'):
+		await message.channel.send('Help!')
 
-client.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.Vtx-kRFqUUmv8bdK9LNqstDhYfM')
+client.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.q-iH7gOt6tnuAlSJPHPhHTQLWWc')
 
 '''import discord
 import os
