@@ -1,24 +1,44 @@
+from warnings import catch_warnings
 import discord
 import os
 
 client = discord.Client()
 
+LISTA_MUSICAS = []
+
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
+    #print(f'Quantidade de musicas: - {len(LISTA_MUSICAS)}')
 
+#captura texto do discord
 @client.event
 async def on_message(message):
-	if message.author == client.user:
-		return
-		
-	if message.content.startswith('$hello'):
-		await message.channel.send('Hello!')
+  try:
+    print(f'Author - {message.author}')
+    if message.author == client.user:
+      return
 
-	if message.content.startswith('$help'):
-		await message.channel.send('Help!')
+    if message.content.startswith('$hello'):
+      textAuthor = message.author
+      #textAuthor = textAuthor.split('#')
+      await message.channel.send(f'Hello! @{textAuthor}')
+    
+    if message.content.startswith('$help'):
+      await message.channel.send('Help!')
 
-client.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.q-iH7gOt6tnuAlSJPHPhHTQLWWc')
+    if message.content.startswith('$m q'):
+      await message.channel.send(len(LISTA_MUSICAS))
+  except KeyboardInterrupt:
+    print('Bot Finalizado')
+  except Exception as e:
+  #  if message.author == 'Guedes#8500':
+  #    await message.channel.send(f'Ocorreu um erro no Bot {e}')
+  #  else:
+     await message.channel.send(f'Ocorreu um erro no Bot')
+  
+
+client.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.7xe2I7Uy53aV-YUwC11-F_pC5DY')
 
 '''import discord
 import os
