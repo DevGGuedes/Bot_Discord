@@ -1,3 +1,6 @@
-text = "Guedes#8500".split('#')
-#text = text.split('#')
-print(text[0])
+import datetime
+date = datetime.datetime.now().time()
+print(date)
+
+from time import gmtime, strftime
+strftime("%Y-%m-%d %H:%M:%S", gmtime())

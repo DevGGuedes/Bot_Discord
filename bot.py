@@ -1,6 +1,9 @@
 from warnings import catch_warnings
 import discord
+from discord.ext import commands,tasks
 import os
+from dotenv import load_dotenv
+import youtube_dl
 
 client = discord.Client()
 
@@ -15,6 +18,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
   try:
+
     print(f'Author - {message.author}')
     if message.author == client.user:
       return
@@ -29,6 +33,7 @@ async def on_message(message):
 
     if message.content.startswith('$m q'):
       await message.channel.send(len(LISTA_MUSICAS))
+
   except KeyboardInterrupt:
     print('Bot Finalizado')
   except Exception as e:
@@ -38,7 +43,7 @@ async def on_message(message):
      await message.channel.send(f'Ocorreu um erro no Bot')
   
 
-client.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.7xe2I7Uy53aV-YUwC11-F_pC5DY')
+client.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.XfZHM0JxzfJ4Wxtek77RVMI2XSs')
 
 '''import discord
 import os
