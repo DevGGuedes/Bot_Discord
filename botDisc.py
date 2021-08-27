@@ -1,4 +1,5 @@
 import re
+from traceback import print_exception, print_tb
 import discord
 from discord.errors import PrivilegedIntentsRequired
 from discord.ext import commands,tasks
@@ -12,11 +13,12 @@ load_dotenv()
 #DISCORD_TOKEN = os.getenv("discord_token")
 
 
-
 intents = discord.Intents().all()
 #intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 bot = commands.Bot(command_prefix='!',intents=intents)
+songs = asyncio.Queue()
+play_next_song = asyncio.Event()
 
 FILA_MUSICAS = []
 #music_on = False
@@ -34,6 +36,11 @@ ytdl_format_options = {
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
+}
+
+FFMPEG_OPTIONS = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 
+    'options': '-vn'
 }
 
 ffmpeg_options = {
@@ -58,45 +65,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
             data = data['entries'][0]
         filename = data['title'] if stream else ytdl.prepare_filename(data)
         return filename
-
-global list_musics
-list_musics = []
-
-@bot.command(name='add', help='To play song')
-async def add_music(ctx, url):
-    list_musics.append(url)
-    embed = discord.Embed(
-        title = "Adicionado na Fila",
-        color = discord.Color.blue()
-    )
-    
-    embed.add_field(name="Quantidade de musicas:", value=len(list_musics), inline=False)
-    embed.add_field(name="Musica:", value=url, inline=False)
-    await ctx.send(embed=embed)
-    print(len(list_musics))
-
-
-@bot.command(name='list', help='To play song')
-async def send_list(ctx):
-    if len(list_musics) > 0:
-        nomeMusica = ""
-        for i in list_musics:
-            index = list_musics.index(i)
-
-        embed = discord.Embed(
-            title = "Musicas",
-            color = discord.Color.blue()
-        )
-        
-        embed.add_field(name="Quantidade de musicas:", value=len(list_musics), inline=False)
-        embed.add_field(name="Musica:", value="None", inline=False)
-        await ctx.send(embed=embed)
-        
-    else:
-        await ctx.send("Nenhuma musica está na fila.")
-
-global music 
-music = None
 
 class Robot():
     #music_on = None
@@ -140,7 +108,80 @@ class Robot():
     def voice_client(self, val):
         self._voice_client = val
 
+    @bot.command(name='qt', help='To play song')
+    async def add_music(self, ctx, url):
+        print(len(self.queue))
+        print(self.queue)
+
 robot = Robot()
+
+@bot.command(name='f', help='Fila')
+async def get_fila(ctx):
+    current = await songs.get()
+    print(f'current {current}')
+
+@bot.command(name='q', help='Colocar na fila')
+async def get_fila(ctx, url):
+    #if not bot.is_voice_connected(ctx.message.server):
+    channel = ctx.message.author.voice.channel
+    #if ctx.message.author.voice.channel.connect:
+    #voice = await channel.connect()
+        #print('')
+    #else:
+        #print('')
+        #voice = await channel.connect()
+
+    #filename = await YTDLSource.from_url(url, loop=bot.loop)
+    #player = voice.play(discord.FFmpegPCMAudio(executable=r"C:\FFmpeg\bin\ffmpeg.exe", source=filename))
+    #asyncio.run_coroutine_threadsafe(ctx.send("No more songs in queue."))
+    #player = await voice.create_ytdl_player(url)
+    await songs.put(url)
+    print(songs)
+    items = []
+    item = await songs.get()
+    print(f'item {item}')
+    #print(asyncio.Queue)
+    current = await songs.get()
+    #print(f'current {current}')
+
+global list_musics
+list_musics = []
+
+@bot.command(name='add', help='To play song')
+async def add_music(ctx, url):
+    robot.list_musics.append(url)
+    embed = discord.Embed(
+        title = "Adicionado na Fila",
+        color = discord.Color.blue()
+    )
+    
+    embed.add_field(name="Quantidade de musicas:", value=len(robot.list_musics), inline=False)
+    embed.add_field(name="Musica:", value=url, inline=False)
+    await ctx.send(embed=embed)
+    print(len(list_musics))
+
+
+@bot.command(name='list', help='To play song')
+async def send_list(ctx):
+    if len(robot.list_musics) > 0:
+        nomeMusica = ""
+        for i in list_musics:
+            index = list_musics.index(i)
+
+        embed = discord.Embed(
+            title = "Musicas",
+            color = discord.Color.blue()
+        )
+        
+        embed.add_field(name="Quantidade de musicas:", value=len(robot.list_musics), inline=False)
+        embed.add_field(name="Musica:", value="None", inline=False)
+        await ctx.send(embed=embed)
+        
+    else:
+        await ctx.send("Nenhuma musica está na fila.")
+
+global music 
+music = None
 
 @bot.command(name='play', help='To play song')
 async def play(ctx, url):
@@ -194,6 +235,7 @@ async def play(ctx, url):
 
             server = ctx.message.guild
             voice_channel = server.voice_client
+            print(voice_channel.is_playing)
             
             #desc = ctx.guild.description
             #icon = str(ctx.guild.icon_url)
@@ -202,6 +244,7 @@ async def play(ctx, url):
                 #filename = await YTDLSource.from_url(url, loop=bot.loop)
                 filename = await YTDLSource.from_url(i, loop=bot.loop)
                 voice_channel.play(discord.FFmpegPCMAudio(executable=r"C:\FFmpeg\bin\ffmpeg.exe", source=filename))
+                print(voice_channel.is_playing)
 
             embed = discord.Embed(
                 title = "Musica",
@@ -209,9 +252,10 @@ async def play(ctx, url):
                 color = discord.Color.blue()
             )
             
-            embed.add_field(name="Por:", value="Teste", inline=False)
+            embed.add_field(name="Adicionado Por:", value=ctx.message.author.mention, inline=False)
             embed.add_field(name="Tocando:", value=i, inline=False)
-            embed.add_field(name="Na fila:", value=len(robot.list_musics), inline=False)
+            if len(robot.list_musics) > 1:
+                embed.add_field(name="Na fila:", value=len(robot.list_musics), inline=False)
 
             music = True
             #print(f'music - {music}')
@@ -305,8 +349,14 @@ async def resume(ctx):
 
 @bot.command(name='leave', help='To make the bot leave the voice channel')
 async def leave(ctx):
-    list_musics= []
+    robot.list_musics = []
     voice_client = ctx.message.guild.voice_client
+
+    if not ctx.message.author.voice:
+        await ctx.send("{} is not connected to a voice channel".format(ctx.message.author.name))
+        active = False
+        return
+
     if voice_client.is_connected():
         await voice_client.disconnect()
     else:
@@ -333,7 +383,10 @@ async def on_ready():
 @bot.command(name = "hello", help = "Prints details of Author")
 async def whats_my_name(ctx) :
     #await ctx.send('Hello {}'.format(ctx.author.name)) Oi Luvi, casada? rs
-    await ctx.send(f'Oi {ctx.author.name}, Casado(a)? rs')
+    await ctx.send(f'Oi {ctx.message.author.mention}, Casado(a)? rs')
+    #await ctx.send(f"Teste {ctx.message.author.mention}")
+    #embed = discord.Embed(description='\n1')
+    #await bot.say(embed=embed)
 
 @bot.command(name = "members", help = "Prints details of Server")
 async def where_am_i(ctx):
@@ -393,4 +446,4 @@ async def on_message(message) :
 if __name__ == "__main__" :
     #bot.run(DISCORD_TOKEN)
     
-    bot.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.XfZHM0JxzfJ4Wxtek77RVMI2XSs')
+    bot.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.MKimKZyLuvzDBE60xzWvtJeoTec')
