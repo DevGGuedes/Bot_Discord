@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 import youtube_dl
 import asyncio
+import datetime
 
 load_dotenv()
 # Get the API token from the .env file.
@@ -443,7 +444,58 @@ async def on_message(message) :
         await message.channel.purge(limit=1)
 
 
+'''
+    0 = segunda
+    1 = terca
+    2 = quarta
+    3 = quinta
+    4 = sexta
+    5 = sab
+    6 = dom
+'''
+@bot.command(name='link', help='Manda links Aula UNIP')
+async def send_links(ctx):
+
+    dataAtual = datetime.datetime.now().date()
+
+    #dia da semana
+    diaSemana = datetime.datetime.today().weekday()
+
+    #numero da semana do ano
+    NumSemana = dataAtual.isocalendar()[1]
+
+    links_sexta = ['https://zoom.us/j/93129458742', 'https://zoom.us/j/94051880473']
+    links_segunda = []
+
+    if NumSemana % 2 == 0:
+
+        if diaSemana == 0:
+            print('Segunda')
+            primeiraAula = links_segunda[0]
+            segundaAula = links_segunda[1]
+
+        elif diaSemana == 4:
+            print('Sexta')
+
+            primeiraAula = links_sexta[0]
+            segundaAula = links_sexta[1]
+
+        
+        embed = discord.Embed(
+            title = "Aulas",
+            color = discord.Color.blue()
+        )
+        
+        embed.add_field(name="19:10", value=primeiraAula, inline=False)
+        embed.add_field(name="20:45", value=segundaAula, inline=False)
+
+        await ctx.send(embed=embed)
+
+    else:
+        print("Semana Impar")
+
+
 if __name__ == "__main__" :
     #bot.run(DISCORD_TOKEN)
-    
-    bot.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.MKimKZyLuvzDBE60xzWvtJeoTec')
+
+    bot.run('')
