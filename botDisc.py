@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 import youtube_dl
 import asyncio
 import datetime
+from BuscaYt import *
 
-load_dotenv()
+#load_dotenv()
 # Get the API token from the .env file.
 #DISCORD_TOKEN = os.getenv("discord_token")
-
 
 intents = discord.Intents().all()
 #intents = discord.Intents.default()
@@ -184,8 +184,12 @@ async def send_list(ctx):
 global music 
 music = None
 
-@bot.command(name='play', help='To play song')
-async def play(ctx, url):
+'''@bot.command(name='s', pass_context=True)
+async def loot(ctx,*,message):
+    await ctx.send(message)'''
+
+@bot.command(name='play', help='To play song', pass_context=True)
+async def play(ctx,*,music):
     
     robot.voice_client = discord.utils.get(ctx.bot.voice_clients, guild=ctx.guild)
     #print(f'voice_client {robot.voice_client}')
@@ -200,10 +204,20 @@ async def play(ctx, url):
         #print(robot.voice_connect)
         #voice_client = True
         #print(voice_client)
-        await ctx.send(f"**Bot Conectado em** {ctx.message.author.voice.channel}")
+        await ctx.send(f"**Bot 'Conectado' em** {ctx.message.author.voice.channel}")
     
-    robot.list_musics.append(url)
-    print(len(robot.list_musics))
+    nomeMusica = ''
+    if music.find('http') < 0:
+        await ctx.send("Buscando Musica. Aguarde!")
+        nomeMusica, linkYt = await BuscaPorMusica(music)
+        music = linkYt
+    else:
+        await ctx.send("Buscando Musica. Aguarde!")
+        nomeMusica = await BuscaMusicaPorLink(music)
+
+    robot.list_musics.append(music)
+    #robot.list_musics.append(linkYt)
+    print(f'Na Fila Classe - {len(robot.list_musics)}')
 
     #for i in robot.list_musics:
     #    print(i)
@@ -236,7 +250,7 @@ async def play(ctx, url):
 
             server = ctx.message.guild
             voice_channel = server.voice_client
-            print(voice_channel.is_playing)
+            #print(voice_channel.is_playing)
             
             #desc = ctx.guild.description
             #icon = str(ctx.guild.icon_url)
@@ -245,11 +259,11 @@ async def play(ctx, url):
                 #filename = await YTDLSource.from_url(url, loop=bot.loop)
                 filename = await YTDLSource.from_url(i, loop=bot.loop)
                 voice_channel.play(discord.FFmpegPCMAudio(executable=r"C:\FFmpeg\bin\ffmpeg.exe", source=filename))
-                print(voice_channel.is_playing)
+                #print(voice_channel.is_playing)
 
             embed = discord.Embed(
                 title = "Musica",
-                description = "teste desc",
+                description = nomeMusica,
                 color = discord.Color.blue()
             )
             
@@ -498,4 +512,4 @@ async def send_links(ctx):
 if __name__ == "__main__" :
     #bot.run(DISCORD_TOKEN)
 
-    bot.run('')
+    bot.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.7_XPyiJ2wPFF1eUooaaPgBPSZXg')
