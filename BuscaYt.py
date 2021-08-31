@@ -43,7 +43,7 @@ async def BuscaMusicaPorLink(url):
 
         nomeMusica = body.xpath('//*[@id="container"]/h1/yt-formatted-string/text()')
         nomeMusica = nomeMusica[0]
-        print(f'Musica Consultada - {nomeMusica}')
+        #print(f'Musica Consultada - {nomeMusica}')
         driver.close()
 
         '''driver = seleniumwire.webdriver.Chrome(chrome_options=options,
@@ -58,7 +58,6 @@ async def BuscaMusicaPorLink(url):
         return nomeMusica
 
 async def BuscaPorMusica(nome):
-        print(f'nome - {nome}')
 
         options = Options()
         options.add_argument('--headless')
@@ -90,11 +89,11 @@ async def BuscaPorMusica(nome):
         nomeMusica = body.xpath('/html/body/ytd-app/div/ytd-page-manager/ytd-search/div[1]/ytd-two-column-search-results-renderer/div/ytd-section-list-renderer/div[2]/ytd-item-section-renderer/div[3]/ytd-video-renderer[1]/div[1]/div/div[1]/div/h3/a/yt-formatted-string/text()')
 
         nomeMusica = nomeMusica[0]
-        print(f'Nome da Musica Consultada - {nomeMusica}')
+        #print(f'Nome da Musica Consultada - {nomeMusica}')
 
         linkMusica = linkMusica[0]
         linkYt += linkMusica
-        print(f'Link da Musica Consultada - {linkYt}')
+        #print(f'Link da Musica Consultada - {linkYt}')
 
         driver.close()
         return nomeMusica, linkYt

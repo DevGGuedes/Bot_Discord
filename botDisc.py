@@ -75,6 +75,7 @@ class Robot():
         self.list_musics = list_musics
         self.voice_connect = False
         self.voice_client = None
+        self.active = False
 
     #Getter Music
     @property
@@ -116,12 +117,12 @@ class Robot():
 
 robot = Robot()
 
-@bot.command(name='f', help='Fila')
-async def get_fila(ctx):
-    current = await songs.get()
-    print(f'current {current}')
+#@bot.command(name='f', help='Fila')
+#async def get_fila(ctx):
+#    current = await songs.get()
+#    print(f'current {current}')
 
-@bot.command(name='q', help='Colocar na fila')
+@bot.command(name='w', help='Colocar na fila')
 async def get_fila(ctx, url):
     #if not bot.is_voice_connected(ctx.message.server):
     channel = ctx.message.author.voice.channel
@@ -198,6 +199,8 @@ async def play(ctx,*,music):
 
     #print(f'voice_client {robot.voice_client}')
     #print(f'robot.voice_connect {robot.voice_connect}')
+    nomeMusica = ''
+    #if robot.active != False:
     if robot.voice_client != None and robot.voice_connect != True:
         #print(voice_client.is_connected())
         robot.voice_connect = True
@@ -206,14 +209,13 @@ async def play(ctx,*,music):
         #print(voice_client)
         await ctx.send(f"**Bot 'Conectado' em** {ctx.message.author.voice.channel}")
     
-    nomeMusica = ''
     if music.find('http') < 0:
         await ctx.send("Buscando Musica. Aguarde!")
-        nomeMusica, linkYt = await BuscaPorMusica(music)
-        music = linkYt
+        #nomeMusica, linkYt = await BuscaPorMusica(music)
+        #music = linkYt
     else:
         await ctx.send("Buscando Musica. Aguarde!")
-        nomeMusica = await BuscaMusicaPorLink(music)
+        #nomeMusica = await BuscaMusicaPorLink(music)
 
     robot.list_musics.append(music)
     #robot.list_musics.append(linkYt)
@@ -246,39 +248,51 @@ async def play(ctx,*,music):
     try :
         #list_musics.append(url)
 
-        for i in robot.list_musics:
+        #for i in robot.list_musics:
 
-            server = ctx.message.guild
-            voice_channel = server.voice_client
-            #print(voice_channel.is_playing)
-            
-            #desc = ctx.guild.description
-            #icon = str(ctx.guild.icon_url)
+        server = ctx.message.guild
+        voice_channel = server.voice_client
+        #print(voice_channel.is_playing)
+        
+        #desc = ctx.guild.description
+        #icon = str(ctx.guild.icon_url)
 
+        player = None
+        if voice_channel.is_playing() != True:
             async with ctx.typing():
                 #filename = await YTDLSource.from_url(url, loop=bot.loop)
-                filename = await YTDLSource.from_url(i, loop=bot.loop)
-                voice_channel.play(discord.FFmpegPCMAudio(executable=r"C:\FFmpeg\bin\ffmpeg.exe", source=filename))
+                #filename = await YTDLSource.from_url(i, loop=bot.loop)
+                filename = await YTDLSource.from_url(music, loop=bot.loop)
+                player = voice_channel.play(discord.FFmpegPCMAudio(executable=r"C:\FFmpeg\bin\ffmpeg.exe", source=filename))
+                robot.music = True
+                await songs.put(player)
                 #print(voice_channel.is_playing)
+        else:
+            print('Add na fila')
+            filename = await YTDLSource.from_url(music, loop=bot.loop)
+            player = voice_channel.play(discord.FFmpegPCMAudio(executable=r"C:\FFmpeg\bin\ffmpeg.exe", source=filename))
+            await songs.put(player)
 
-            embed = discord.Embed(
-                title = "Musica",
-                description = nomeMusica,
-                color = discord.Color.blue()
-            )
+        embed = discord.Embed(
+            title = "Musica",
+            description = nomeMusica,
+            color = discord.Color.blue()
+        )
+        
+        embed.add_field(name="Adicionado Por:", value=ctx.message.author.mention, inline=False)
+        #embed.add_field(name="Tocando:", value=i, inline=False)
+        embed.add_field(name="Tocando:", value=music, inline=False)
+        if len(robot.list_musics) > 1:
+            embed.add_field(name="Na fila:", value=len(robot.list_musics), inline=False)
+
+        #robot.music = True
+        #print(f'music - {music}')
+
+        await ctx.send(embed=embed)
             
-            embed.add_field(name="Adicionado Por:", value=ctx.message.author.mention, inline=False)
-            embed.add_field(name="Tocando:", value=i, inline=False)
-            if len(robot.list_musics) > 1:
-                embed.add_field(name="Na fila:", value=len(robot.list_musics), inline=False)
-
-            music = True
-            #print(f'music - {music}')
-
-            await ctx.send(embed=embed)
         #await ctx.send('**Now playing:** {}'.format(filename))
-    except:
-        await ctx.send("Não foi possivel reproduzir a musica.")
+    except Exception as e:
+        await ctx.send(f"Não foi possivel reproduzir a musica. {e}")
 
 #robot = Robot()
 
@@ -291,7 +305,7 @@ async def join(ctx):
     
     if not ctx.message.author.voice:
         await ctx.send("{} is not connected to a voice channel".format(ctx.message.author.name))
-        active = False
+        robot.active = False
         return
     
     #if not voice_client:
@@ -307,9 +321,9 @@ async def join(ctx):
     else:
         channel = ctx.message.author.voice.channel
         #print(f'ctx.message.author.voice.channel = {ctx.message.author.voice.channel}')
-        active = True
+        robot.active = True
         await channel.connect()
-    return active
+    #return active
     #channel = ctx.message.author.voice.channel
     #await channel.connect()
     return
@@ -478,38 +492,103 @@ async def send_links(ctx):
     #numero da semana do ano
     NumSemana = dataAtual.isocalendar()[1]
 
+    links_segunda = ['https://zoom.us/j/92091334189' ,'https://zoom.us/j/91570630015']
+    links_terca = []
+    links_quarta = []
+    links_quinta = []
     links_sexta = ['https://zoom.us/j/93129458742', 'https://zoom.us/j/94051880473']
-    links_segunda = []
+    
+    text = ""
 
     if NumSemana % 2 == 0:
+        s = "Semana Par"
 
         if diaSemana == 0:
-            print('Segunda')
+            text = 'Segunda'
             primeiraAula = links_segunda[0]
             segundaAula = links_segunda[1]
 
+        elif diaSemana == 1:
+            text = 'Terça'
+            primeiraAula = links_terca[0]
+            segundaAula = links_terca[1]
+            
+        elif diaSemana == 2:
+            text = 'Quarta'
+            primeiraAula = links_quarta[0]
+            segundaAula = links_quarta[1]
+
+        elif diaSemana == 3:
+            text = 'Quinta'
+            primeiraAula = links_quinta[0]
+            segundaAula = links_quinta[1]
+
         elif diaSemana == 4:
-            print('Sexta')
+            text = 'Sexta'
 
             primeiraAula = links_sexta[0]
             segundaAula = links_sexta[1]
 
-        
-        embed = discord.Embed(
-            title = "Aulas",
-            color = discord.Color.blue()
-        )
-        
-        embed.add_field(name="19:10", value=primeiraAula, inline=False)
-        embed.add_field(name="20:45", value=segundaAula, inline=False)
-
-        await ctx.send(embed=embed)
-
     else:
-        print("Semana Impar")
+        s = "Semana Impar"
+
+        if diaSemana == 0:
+            text = 'Segunda'
+            primeiraAula = links_segunda[0]
+            segundaAula = links_segunda[1]
+
+        elif diaSemana == 1:
+            text = 'Terça'
+            primeiraAula = links_terca[0]
+            segundaAula = links_terca[1]
+            
+        elif diaSemana == 2:
+            text = 'Quarta'
+            primeiraAula = links_quarta[0]
+            segundaAula = links_quarta[1]
+
+        elif diaSemana == 3:
+            text = 'Quinta'
+            primeiraAula = links_quinta[0]
+            segundaAula = links_quinta[1]
+
+        elif diaSemana == 4:
+            text = 'Sexta'
+
+            primeiraAula = links_sexta[0]
+            segundaAula = links_sexta[1]
+
+    embed = discord.Embed(
+        title = f"Aulas {text} ({s})",
+        color = discord.Color.blue()
+    )
+    
+    embed.add_field(name="19:10", value=primeiraAula, inline=False)
+    embed.add_field(name="20:45", value=segundaAula, inline=False)
+
+    await ctx.send(embed=embed)
+
+import threading
+async def audio_player_task():
+    while True:
+        play_next_song.clear()
+        current = await songs.get()
+        print(current)
+        current = threading.Thread(target=await songs.get())
+        current.start()
+        await play_next_song.wait()
 
 
-if __name__ == "__main__" :
+@bot.command(name='fila', help='Manda links Aula UNIP')
+async def list_queue(ctx):
+    await ctx.send("Lista")
+    current = await songs.get()
+    print(f'current {current}')
+    print(f'songs.get() {songs.get()}')
+    
+
+#if __name__ == "__main__" :
     #bot.run(DISCORD_TOKEN)
 
-    bot.run('ODc5NTEwMzYxMjU3MTc3MDk5.YSQx2g.7_XPyiJ2wPFF1eUooaaPgBPSZXg')
+client.loop.create_task(audio_player_task())
+bot.run('')
