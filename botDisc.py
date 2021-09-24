@@ -4,7 +4,7 @@ import discord
 from discord.errors import PrivilegedIntentsRequired
 from discord.ext import commands,tasks
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import youtube_dl
 import asyncio
 import datetime
@@ -493,9 +493,10 @@ async def send_links(ctx):
     NumSemana = dataAtual.isocalendar()[1]
 
     links_segunda = ['https://zoom.us/j/92091334189' ,'https://zoom.us/j/91570630015']
-    links_terca = []
-    links_quarta = []
-    links_quinta = []
+    links_terca = ['https://zoom.us/j/94115210218','https://guedesnaocolocouolink.com.br']
+    links_quarta = ['https://zoom.us/j/94315162019', 'https://zoom.us/j/91560761422']
+    #links_quarta = ['https://zoom.us/j/98852193072', 'https://zoom.us/j/96299304491']
+    links_quinta = ['https://zoom.us/j/91065560270','https://zoom.us/j/97601629445 ']
     links_sexta = ['https://zoom.us/j/93129458742', 'https://zoom.us/j/94051880473']
     
     text = ""
